@@ -66,6 +66,7 @@ server.port=8080
 
 ## Project Structure
 
+```
 src/
 ├── main/
 │   ├── java/
@@ -75,28 +76,13 @@ src/
 │   │               ├── controller/            # REST controllers
 │   │               ├── service/               # Business logic
 │   │               ├── model/                 # Data models
-<<<<<<< HEAD
-│   │               └── StickerGeneratorApplication.java   # Main entry point for Spring Boot application
-=======
-│   │               └── StickerGeneratorApplication.java
->>>>>>> 9994359c0b0fd2c248b635fe1bd62bbb6a48171d
+│   │               └── StickerGeneratorApplication.java   # Main entry point
 │   └── resources/
 │       ├── templates/          # Thymeleaf templates
 │       ├── static/             # CSS, JS, images
 │       ├── data/               # Sticker data
 │       └── application.properties
-<<<<<<< HEAD
-├── test/
-│   └── java/
-│       └── com/
-│           └── example/
-│               └── stickergenerator/
-│                   ├── controller/            # Controller tests
-│                   ├── service/               # Service tests
-│                   └── model/                 # Model tests
-=======
-
->>>>>>> 9994359c0b0fd2c248b635fe1bd62bbb6a48171d
+```
 
 
 ## Contributing
