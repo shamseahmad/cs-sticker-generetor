@@ -33,18 +33,32 @@ public class SteamMarketService {
         return CompletableFuture.supplyAsync(() -> {
             // Steam Market has strong anti-bot protection, so we'll use realistic mock prices
             // based on sticker characteristics for demonstration purposes
-            
-            System.out.println("Generating realistic price for: " + stickerName);
-            
             double price = generateRealisticPrice(stickerName);
             String searchUrl = STEAM_MARKET_SEARCH_URL + URLEncoder.encode(stickerName, StandardCharsets.UTF_8);
-            
-            System.out.println("Generated price: $" + price + " for: " + stickerName);
             return new StickerPrice(stickerName, price, "USD", searchUrl);
         });
     }
     
+    // Method to clear cache for testing new prices
+    public void clearPriceCache() {
+        priceCache.clear();
+        System.out.println("🗑️ Price cache cleared!");
+    }
+    
     private double generateRealisticPrice(String stickerName) {
+        // Clear cache to get fresh prices with new algorithm
+        // (Remove this line after testing)
+        if (priceCache.size() > 50) { // Auto-clear if cache gets too big
+            System.out.println("🗑️ Auto-clearing large price cache");
+            priceCache.clear();
+        }
+        
+        // TEMPORARY: Clear cache for Berlin 2019 stickers to get fresh prices
+        if (stickerName.contains("Berlin 2019") && priceCache.containsKey(stickerName)) {
+            System.out.println("🔄 Clearing cache for Berlin 2019 sticker: " + stickerName);
+            priceCache.remove(stickerName);
+        }
+        
         // Check cache first to ensure consistent pricing
         if (priceCache.containsKey(stickerName)) {
             double cachedPrice = priceCache.get(stickerName);
@@ -58,89 +72,99 @@ public class SteamMarketService {
         if (stickerName.contains("BLAST.tv") || stickerName.contains("ESL") || 
             stickerName.contains("FACEIT") || stickerName.contains("PGL")) {
             // Organization stickers: ₹0.15 ≈ $0.002 (BLAST.tv actual price)
-            // Use hash for deterministic variance instead of random
             int hash = Math.abs(stickerName.hashCode());
-            double orgPrice = 0.002 + ((hash % 30) / 10000.0); // $0.002-$0.005 range (deterministic)
-            orgPrice = Math.round(orgPrice * 1000.0) / 1000.0; // Round to 3 decimal places
+            double orgPrice = 0.002 + ((hash % 30) / 10000.0); // $0.002-$0.005 range
+            orgPrice = Math.round(orgPrice * 1000.0) / 1000.0;
             System.out.println("💼 Organization sticker price: $" + orgPrice);
             priceCache.put(stickerName, orgPrice);
             return orgPrice;
         }
         
-        // Player stickers base value
-        double basePrice = 0.08;
+        // Base price for regular player stickers - start much lower (realistic Steam Market prices)
+        double basePrice = 0.03; // Regular stickers around $0.03 like real ZywOo
         
-        // Tournament tier pricing with significant differences
+        // Tournament tier pricing - more realistic differences
         if (stickerName.contains("Austin 2025")) {
-            basePrice = 0.15; // Most recent tournament
+            basePrice = 0.04; // Most recent tournament
         } else if (stickerName.contains("Paris 2023")) {
-            basePrice = 0.12; // Recent major
+            basePrice = 0.03; // Recent major (matches real ZywOo price)
         } else if (stickerName.contains("Copenhagen 2024")) {
-            basePrice = 0.14; // Major tournament  
+            basePrice = 0.035; // Recent major  
         } else if (stickerName.contains("Rio 2022")) {
-            basePrice = 0.18; // Popular older major
+            basePrice = 0.045; // Slightly older
         } else if (stickerName.contains("Stockholm 2021")) {
-            basePrice = 0.22; // Rare older major
+            basePrice = 0.06; // Older major
         } else if (stickerName.contains("Berlin 2019")) {
-            basePrice = 0.35; // Very rare classic
+            basePrice = 0.55; // Much more expensive (matches real $0.58 for ZywOo)
         } else if (stickerName.contains("London 2018")) {
-            basePrice = 0.45; // Vintage
+            basePrice = 0.12; // Vintage
         } else if (stickerName.contains("Boston 2018")) {
-            basePrice = 0.50; // Rare vintage
+            basePrice = 0.15; // Vintage
         } else if (stickerName.contains("Krakow 2017")) {
-            basePrice = 0.75; // Classic vintage
+            basePrice = 0.25; // Classic vintage
         } else if (stickerName.contains("Cologne 2015")) {
-            basePrice = 1.20; // Very rare classic
+            basePrice = 0.8; // Very rare classic
         } else if (stickerName.contains("Katowice 2014")) {
-            basePrice = 25.00; // Legendary rare (extremely expensive)
+            basePrice = 8.0; // Legendary rare (very expensive)
         }
         
-        // Player popularity multipliers
+        // Player popularity multipliers (more conservative)
         if (stickerName.toLowerCase().contains("donk")) {
-            basePrice *= 0.8; // Rising star but still cheaper: ~$0.12
+            basePrice *= 0.9; // Rising star
         } else if (stickerName.toLowerCase().contains("zywoo")) {
-            basePrice *= 1.3; // Top tier current player
+            basePrice *= 1.0; // Keep base price (matches real $0.03 for Paris, $0.58 for Berlin)
         } else if (stickerName.toLowerCase().contains("s1mple")) {
             basePrice *= 1.8; // Legendary player
         } else if (stickerName.toLowerCase().contains("niko")) {
-            basePrice *= 1.6; // Popular veteran
+            basePrice *= 1.4; // Popular veteran
         } else if (stickerName.toLowerCase().contains("device")) {
-            basePrice *= 1.4; // Veteran player
+            basePrice *= 1.2; // Veteran player
         } else if (stickerName.toLowerCase().contains("kennys")) {
-            basePrice *= 2.2; // Legend from classic era
+            basePrice *= 2.0; // Legend from classic era
         } else if (stickerName.toLowerCase().contains("f0rest") || 
                    stickerName.toLowerCase().contains("neo") || 
                    stickerName.toLowerCase().contains("taz")) {
-            basePrice *= 3.5; // Katowice 2014 legends
+            basePrice *= 4.0; // Katowice 2014 legends
         }
         
-        // Special edition pricing
+        // Special edition pricing - MUCH MORE REALISTIC
         if (stickerName.contains("(Gold)")) {
-            basePrice *= 6.0; // Gold stickers are much more expensive
+            basePrice *= 950.0; // Gold stickers are EXTREMELY expensive (matches real $29+ for ZywOo Gold)
         } else if (stickerName.contains("(Holo)")) {
-            basePrice *= 3.2; // Holo stickers
+            basePrice *= 25.0; // Holo stickers are very expensive
         } else if (stickerName.contains("(Foil)")) {
-            basePrice *= 2.1; // Foil stickers
+            basePrice *= 8.0; // Foil stickers moderately expensive
+        } else if (stickerName.contains("(Glitter)")) {
+            basePrice *= 12.0; // Glitter stickers (new finish)
         }
         
-        // Use sticker name hash for consistent but varied pricing
+        // Add hash-based variance for consistency
         int hash = Math.abs(stickerName.hashCode());
-        double hashVariance = 0.80 + ((hash % 40) / 100.0); // 0.80-1.20 multiplier (deterministic)
+        double hashVariance = 0.85 + ((hash % 30) / 100.0); // 0.85-1.15 multiplier
         basePrice *= hashVariance;
         
-        // Add small hash-based variance
-        double extraVariance = (hash % 100) / 1000.0; // 0-0.099 based on name
+        // Small additional variance
+        double extraVariance = (hash % 50) / 1000.0; // 0-0.049 based on name
         basePrice += extraVariance;
         
-        // Ensure minimum price and round to 2 decimal places
-        basePrice = Math.max(0.03, basePrice);
-        double finalPrice = Math.round(basePrice * 100.0) / 100.0;
+        // Ensure minimum price and round appropriately
+        if (basePrice >= 10.0) {
+            // For expensive stickers, round to 2 decimal places
+            basePrice = Math.round(basePrice * 100.0) / 100.0;
+        } else if (basePrice >= 1.0) {
+            // For medium stickers, round to 2 decimal places
+            basePrice = Math.round(basePrice * 100.0) / 100.0;
+        } else {
+            // For cheap stickers, round to 2 decimal places but ensure minimum
+            basePrice = Math.max(0.01, basePrice);
+            basePrice = Math.round(basePrice * 100.0) / 100.0;
+        }
         
         // Cache the price for consistency
-        priceCache.put(stickerName, finalPrice);
+        priceCache.put(stickerName, basePrice);
         
-        System.out.println("💰 Final price for " + stickerName + ": $" + finalPrice);
-        return finalPrice;
+        System.out.println("💰 Final price for " + stickerName + ": $" + basePrice);
+        return basePrice;
     }
     
     private double extractPrice(String priceText) {
