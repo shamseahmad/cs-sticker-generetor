@@ -36,11 +36,20 @@ public class NameGeneratorService {
     private void generateOverlappingCombinations(String targetName, String currentResult, 
                                                List<Sticker> currentCombo, List<StickerCombo> results) {
         
-        // Simple approach: try all 2-sticker combinations
+        // Simple approach: try single stickers and 2-sticker combinations
         if (currentCombo.isEmpty()) {
             List<Sticker> allStickers = stickerService.getAllStickers();
             
             System.out.println("🎯 Searching for: '" + targetName + "'");
+            
+            // Method 0: Single sticker exact match
+            for (Sticker sticker : allStickers) {
+                String stickerName = sticker.getExtractedName().toLowerCase();
+                if (stickerName.equals(targetName)) {
+                    System.out.println("🎉 FOUND (single): " + stickerName + " = " + targetName);
+                    results.add(new StickerCombo(targetName, Arrays.asList(sticker)));
+                }
+            }
             
             // Try each sticker as the first sticker
             for (Sticker sticker1 : allStickers) {
