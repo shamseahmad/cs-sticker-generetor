@@ -85,18 +85,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const price = combo.prices && combo.prices[stickerIndex] ? combo.prices[stickerIndex] : null;
                 const priceClass = getPriceClass(price?.price || 0);
                 
-                // Extract sticker name with fallbacks
-                const stickerName = sticker.extractedName || sticker.fullName || 'Unknown Sticker';
+                // Extract sticker name using camelCase field names (standard JSON)
+                const stickerName = sticker.extractedName || 'Unknown Sticker';
                 const fullStickerName = sticker.fullName || stickerName;
                 
-                console.log('Sticker Name:', stickerName);
-                console.log('Full Sticker Name:', fullStickerName);
-                console.log('Price:', price);
-                
-                // Construct Steam Market URL properly
-                const steamMarketUrl = price && price.marketUrl ? 
-                    price.marketUrl : 
-                    `https://steamcommunity.com/market/listings/730/${encodeURIComponent(fullStickerName)}`;
+                // Construct Steam Market URL using search format for better results
+                // Always use the current sticker's name to avoid URL swapping issues
+                const steamMarketUrl = `https://steamcommunity.com/market/search?appid=730&q=${encodeURIComponent(fullStickerName)}`;
                 
                 return `
                     <div class="col-md-6 mb-3">

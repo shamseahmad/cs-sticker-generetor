@@ -34,12 +34,20 @@ public class StickerService {
             );
             
             System.out.println("Loaded " + stickerNames.size() + " stickers from JSON file");
+            for (String name : stickerNames) {
+                System.out.println("Raw sticker name: '" + name + "'");
+            }
             
             this.stickers = stickerNames.stream()
+                .map(String::trim) // Trim whitespace
+                .filter(name -> !name.isEmpty()) // Filter empty names
                 .map(this::parseSticker)
                 .toList();
                 
             System.out.println("Parsed " + this.stickers.size() + " stickers");
+            for (Sticker sticker : this.stickers) {
+                System.out.println("Parsed sticker - Full: '" + sticker.getFullName() + "', Extracted: '" + sticker.getExtractedName() + "'");
+            }
             
         } catch (IOException e) {
             throw new RuntimeException("Failed to load stickers from JSON file: " + e.getMessage(), e);
@@ -47,8 +55,8 @@ public class StickerService {
     }
     
     private Sticker parseSticker(String fullName) {
-        // Pattern: "Sticker | Senzu (Gold) | Shanghai 2024"
-        Pattern pattern = Pattern.compile("Sticker\\s*\\|\\s*([^|]+?)\\s*(?:\\([^)]*\\))?\\s*\\|\\s*(.+)");
+        // Pattern: "Sticker | PlayerName (Rarity) | Tournament"
+        Pattern pattern = Pattern.compile("Sticker\\s*\\|\\s*([^|()]+?)\\s*(?:\\([^)]*\\))?\\s*\\|\\s*(.+)");
         Matcher matcher = pattern.matcher(fullName);
         
         if (matcher.find()) {
@@ -57,12 +65,25 @@ public class StickerService {
             String rarity = extractRarity(fullName);
             
             Sticker sticker = new Sticker(fullName, extractedName, rarity, tournament);
-            System.out.println("Parsed sticker: " + extractedName + " from " + fullName);
+            System.out.println("Successfully parsed sticker: '" + extractedName + "' from '" + fullName + "'");
             return sticker;
         }
         
-        // If pattern doesn't match, use the full name as extracted name
-        System.out.println("Pattern didn't match for: " + fullName + ", using as-is");
+        // If pattern doesn't match, try a simpler pattern to extract just the name
+        Pattern simplePattern = Pattern.compile("Sticker\\s*\\|\\s*([^|]+)");
+        Matcher simpleMatcher = simplePattern.matcher(fullName);
+        if (simpleMatcher.find()) {
+            String extractedName = simpleMatcher.group(1).trim();
+            // Remove any parenthetical content like (Gold)
+            extractedName = extractedName.replaceAll("\\s*\\([^)]*\\)\\s*", "").trim();
+            
+            Sticker sticker = new Sticker(fullName, extractedName, "", "");
+            System.out.println("Simple pattern match for sticker: '" + extractedName + "' from '" + fullName + "'");
+            return sticker;
+        }
+        
+        // If no pattern matches, use the full name as extracted name
+        System.out.println("No pattern matched for: '" + fullName + "', using as-is");
         return new Sticker(fullName, fullName, "", "");
     }
     
